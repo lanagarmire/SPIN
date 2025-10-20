@@ -11,7 +11,7 @@
 
 module load R/4.4.0
 
-# 明确指定每个 array task 对应的参数组合
+
 q_val_list=(2 2 3 3 4 4 5 5 6 6 7 7 8 8)
 chain_list=(1 2 1 2 1 2 1 2 1 2 1 2 1 2)
 
