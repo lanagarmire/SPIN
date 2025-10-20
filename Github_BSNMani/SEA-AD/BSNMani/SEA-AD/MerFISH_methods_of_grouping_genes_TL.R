@@ -1,7 +1,3 @@
-################
-# Trying other methods to group genes
-# Tong Liu 2/6/2026
-# Try two methods of grouping genes: Hierarchy Clustering and Gaussian Mixture Model
 #############################
 library(cluster)   
 library(gplots)    
@@ -110,4 +106,5 @@ for(i in 1:q_val){
     subnetwork_heatmap_v2(idx_ref=idx_ls_whole, U_sub, col.side=col.side, col.heat=col.heat, title=paste("q =",i),
                              na.color="grey", breaks_vec = NULL, lhei_ratio=c(3,5), lwid_ratio=c(3,5))
 }
+
 
