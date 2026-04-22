@@ -75,11 +75,11 @@ all_df <- all_df %>%
   mutate(GeneRatio_numeric = Count / Total)
 
 setwd("D:\\Research_project\\For Test\\helphaowen\\helphaowen_later\\Downstream_res\\new_results")
-saveRDS(all_df, "subnetwork2_res.RDS")
+saveRDS(all_df, "subnetwork2_res.RDS")   # ****
 
 rm(list = ls())
 setwd("D:\\Research_project\\For Test\\helphaowen\\helphaowen_later\\Downstream_res\\new_results")
-all_df = readRDS("subnetwork2_res.RDS")   ****
+all_df = readRDS("subnetwork2_res.RDS")  # ****
 
 final_plot = ggplot(all_df, aes(x = GeneRatio_numeric, y = Term)) +
   geom_point(aes(size = count, color = padj)) +
