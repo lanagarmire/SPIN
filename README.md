@@ -1,2 +1,2 @@
-# BSNMani_application
-Code and scripts for the paper “Linking spatial omics to patient phenotypes at the population scale by BSNMani: Bayesian scalar-on-network regression with manifold learning”.
+# SPIN (Spatial Predictive Integration Network)
+Code and scripts for the paper “Population-Scale Integration of Spatial Omics Networks for Clinical Prediction and Biological Discovery”.
