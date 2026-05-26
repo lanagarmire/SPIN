@@ -49,9 +49,21 @@ SPIN/
 │   ├── bsnmani_modeling/
 │   ├── benchmarking/
 │   └── visualization/
-├── results/
-│   ├── SEA_AD/
-│   └── IMC_BC/
+results/
+├── SEA_AD/
+│   ├── network_matrices/
+│   ├── bsnmani_outputs/
+│   ├── benchmark_results/
+│   └── enrichment_results/
+├── IMC_BC/
+│   ├── network_matrices/
+│   ├── bsnmani_outputs/
+│   ├── survival_results/
+│   └── enrichment_results/
+└── celltype_SEAAD/
+│   ├── oligodendrocyte_networks/
+│   ├── bsnmani_outputs/
+│   └── enrichment_results/
 ├── figures/
 │   ├── Figure1/
 │   ├── Figure2/
