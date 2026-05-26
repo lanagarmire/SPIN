@@ -266,39 +266,6 @@ Rscript scripts/visualization/plot_celltype_oligodendrocyte_SEAAD.R
 
 ---
 
-## Reproducing Main Figures
-
-### Figure 1: SPIN workflow
-
-```bash
-Rscript scripts/visualization/figure1_workflow.R
-```
-
-### Figure 2: SEA-AD benchmarking
-
-```bash
-Rscript scripts/visualization/figure2_SEAAD_benchmarking.R
-```
-
-### Figure 3: SEA-AD SPIN interpretation
-
-```bash
-Rscript scripts/visualization/figure3_SEAAD_interpretation.R
-```
-
-### Figure 4: IMC breast cancer survival prediction
-
-```bash
-Rscript scripts/visualization/figure4_IMC_survival.R
-```
-
-### Figure 5: Oligodendrocyte-specific SEA-AD analysis
-
-```bash
-Rscript scripts/visualization/figure5_SEAAD_oligodendrocyte.R
-```
-
----
 
 ## Main Analysis Summary
 
@@ -341,7 +308,6 @@ results/
 ├── SEA_AD/
 │   ├── network_matrices/
 │   ├── bsnmani_outputs/
-│   ├── cross_validation_results/
 │   ├── benchmark_results/
 │   └── enrichment_results/
 ├── IMC_BC/
@@ -370,18 +336,7 @@ results/
 
 ## Citation
 
-If you use SPIN, please cite:
-
-```bibtex
-@article{SPIN2026,
-  title   = {Population-Scale Integration of Spatial Omics Networks for Clinical Prediction and Biological Discovery by SPIN},
-  author  = {Liu, Tong and Ko, Euiseong and Yang, Yiwen and Wu, Haowen and Unjitwattana, Thatchayut and Wang, Suyuan and Kang, Jian and Li, Yijun and Garmire, Lana X.},
-  year    = {2026},
-  journal = {In revision}
-}
-```
-
-Please also cite BSNMani:
+Please cite BSNMani:
 
 ```bibtex
 @article{BSNMani2024,
