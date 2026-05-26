@@ -339,11 +339,11 @@ results/
 Please cite BSNMani:
 
 ```bibtex
-@article{BSNMani2024,
-  title   = {BSNMani: Bayesian Scalar-on-network Regression with Manifold Learning},
-  author  = {Li, Yijun and others},
-  year    = {2024},
-  archivePrefix = {arXiv}
+@article{li2024bsnmani,
+  title={Bsnmani: Bayesian scalar-on-network regression with manifold learning},
+  author={Li, Yijun and Choi, Ki Sueng and Dunlop, Boadie W and Craighead, Wade Edward and Mayberg, Helen S and Garmire, Lana and Guo, Ying and Kang, Jian},
+  journal={arXiv preprint arXiv:2410.02965},
+  year={2024}
 }
 ```
 
