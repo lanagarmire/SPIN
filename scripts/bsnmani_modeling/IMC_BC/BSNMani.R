@@ -1,7 +1,5 @@
 #' Run BSNMani on BC data
-#' Modified from /nfs/dcmb-lgarmire/haowenwu/Breast_Cancer_IMC_BSNMani.R
-
-source("/nfs/dcmb-lgarmire/yangiwen/workspace/common/Utils.R")
+source("scripts/bsnmani_modeling/common/Utils.R")
 
 # Get running options
 spec <- matrix(
@@ -46,12 +44,21 @@ library(coda)
 library(survival)
 
 ## pull the scripts from github
-sourceCpp("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/hybrid_M0_MALA_LR_FAST_v2.cpp")
-sourceCpp("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/hybrid_M0_MALA_LR_A_lambda_new.cpp")
-sourceCpp("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/hybrid_M0_MALA_LR_g2.cpp")
-source("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/g1_BFGS_init.R")
-source("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/g1_diagnostics_helper.R")
-source("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SEA-AD/BSNMani-dev/two_stage_train_pipeline.R")
+Rcpp::sourceCpp(
+  "scripts/bsnmani_modeling/common/hybrid_M0_MALA_LR_FAST_v2.cpp"
+)
+
+Rcpp::sourceCpp(
+  "scripts/bsnmani_modeling/common/hybrid_M0_MALA_LR_A_lambda_new.cpp"
+)
+
+Rcpp::sourceCpp(
+  "scripts/bsnmani_modeling/common/hybrid_M0_MALA_LR_g2.cpp"
+)
+
+source("scripts/bsnmani_modeling/common/g1_BFGS_init.R")
+source("scripts/bsnmani_modeling/common/g1_diagnostics_helper.R")
+source("scripts/bsnmani_modeling/common/two_stage_train_pipeline.R")
 
 fix_ls <- ""
 SGI_g1 <- "GQN"
