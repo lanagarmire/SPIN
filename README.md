@@ -459,7 +459,7 @@ Please also cite the SPIN manuscript when its final citation becomes available:
 ```bibtex
 @article{spin_spatial_omics,
   title   = {Population-Scale Integration of Spatial Omics Networks for Clinical Prediction and Biological Discovery by SPIN},
-  author  = {Author list},
+  author  = {Tong Liu, Euiseong Ko, Yiwen Yang, Haowen Wu, Thatchayut Unjitwattana, Suyuan Wang, Jian Kang, Yijun Li*, Lana X Garmire*},
   journal = {Journal},
   year    = {Year}
 }
