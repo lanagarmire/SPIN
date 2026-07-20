@@ -47,3 +47,26 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+__pycache__/
+*.pyc
+
+# Local R session files
+.Rhistory
+.RData
+.RDataTmp
+*.RDS
+*.rds
+
+# Large spatial-omics data and generated arrays
+*.h5ad
+*.npy
+
+# Logs and temporary files
+*.out
+*.err
+*.log
+.ipynb_checkpoints/
+
+# Smoothie intermediate data
+scripts/network_construction/SEA_AD/Smoothie/smoothie_input/
+scripts/network_construction/SEA_AD/Smoothie/smoothie_output/

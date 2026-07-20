@@ -1,0 +1,535 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+rm(list = ls())
+library(DescTools)
+
+## SpaceX_res_all_3celltype_update file
+setwd("/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/SpaceX_BSNMani/data")
+
+## read 4 data
+baseline = readRDS("Baseline_co_expression_list_uni.RDS")
+hdwgcna = readRDS("hdWGCNA_co_expression_list_uni.RDS")
+spacex = readRDS("SpaceX_co_expression_list_uni.RDS")
+smoothie= readRDS("Smoothie_co_expression_list_uni.RDS")
+
+ 
+baseline_filter = baseline
+hdwgcna_filter = hdwgcna
+spacex_filter = spacex
+smoothie_filter = smoothie
+
+
+safe_fisherz <- function(mat) {
+  FisherZ(mat)
+}
+baseline_z  <- lapply(baseline_filter, safe_fisherz)
+hdwgcna_z   <- lapply(hdwgcna_filter, safe_fisherz)
+spacex_z    <- lapply(spacex_filter, safe_fisherz)
+smoothie_z  <- lapply(smoothie_filter, safe_fisherz)
+
+set_diag_zero <- function(lst) {
+  lapply(lst, function(mat) {
+    diag(mat) <- 0
+    return(mat)
+  })
+}
+
+baseline_z  <- set_diag_zero(baseline_z)
+hdwgcna_z   <- set_diag_zero(hdwgcna_z)
+spacex_z    <- set_diag_zero(spacex_z)
+smoothie_z  <- set_diag_zero(smoothie_z)
+
+keep_vars <- c("baseline_z", "hdwgcna_z", "spacex_z", "smoothie_z")
+rm(list = setdiff(ls(), keep_vars))
+```
+
+```{r}
+################
+## begin to draw heatmaps
+################
+
+library(pheatmap)
+library(gridExtra)
+library(grid)
+
+setwd("/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/4heatmap_comparison/Visualization")
+
+for (i in 1:27) {
+  print(i)
+  patient_name <- names(baseline_z)[i]
+  print(paste0("we are dealing with: ", patient_name))
+  
+  baseline_temp <- as.matrix(baseline_z[[i]])
+  hdwgcna_temp <- as.matrix(hdwgcna_z[[i]])
+  spacex_temp <- as.matrix(spacex_z[[i]])
+  smoothie_temp <- as.matrix(smoothie_z[[i]])
+  
+  all_vals <- c(baseline_temp, hdwgcna_temp, spacex_temp, smoothie_temp)
+  all_vals <- all_vals[is.finite(all_vals)]
+  val_range <- max(abs(quantile(all_vals, probs = c(0.01, 0.99))))
+  val_range <- ceiling(val_range * 10) / 10  
+  
+  breaks <- seq(-val_range, val_range, length.out = 100)
+  colors <- colorRampPalette(c("blue", "white", "red"))(99)
+  
+  p1_baseline <- pheatmap(baseline_temp,
+                          color = colors,
+                          breaks = breaks,
+                          main = "WGCNA",
+                          cluster_rows = TRUE,
+                          cluster_cols = TRUE,
+                          fontsize_row = 1.5,
+                          fontsize_col = 1.5,
+                          treeheight_row = 0,
+                          treeheight_col = 0,
+                          border_color = NA,
+                          silent = TRUE)
+  
+  row_order <- p1_baseline$tree_row$order
+  col_order <- p1_baseline$tree_col$order
+  
+  p2_hdwgcna <- pheatmap(hdwgcna_temp[row_order, col_order],
+                         color = colors,
+                         breaks = breaks,
+                         main = "hdWGCNA",
+                         cluster_rows = FALSE,
+                         cluster_cols = FALSE,
+                         fontsize_row = 1.5,
+                         fontsize_col = 1.5,
+                         border_color = NA,
+                         silent = TRUE)
+  
+  p3_spacex <- pheatmap(spacex_temp[row_order, col_order],
+                        color = colors,
+                        breaks = breaks,
+                        main = "SpaceX",
+                        cluster_rows = FALSE,
+                        cluster_cols = FALSE,
+                        fontsize_row = 1.5,
+                        fontsize_col = 1.5,
+                        border_color = NA,
+                        silent = TRUE)
+  
+  p4_smoothie <- pheatmap(smoothie_temp[row_order, col_order],
+                          color = colors,
+                          breaks = breaks,
+                          main = "Smoothie",
+                          cluster_rows = FALSE,
+                          cluster_cols = FALSE,
+                          fontsize_row = 1.5,
+                          fontsize_col = 1.5,
+                          border_color = NA,
+                          silent = TRUE)
+  
+  png(paste0("compare_4_methods_", patient_name, ".png"), width = 5000, height = 3000, res = 600)
+  grid.arrange(p1_baseline$gtable,
+               p2_hdwgcna$gtable,
+               p3_spacex$gtable,
+               p4_smoothie$gtable,
+               ncol = 2,
+               top = textGrob(paste0("Patient ", patient_name,"'s comparison heatmap"), gp = gpar(fontsize = 15, fontface = "bold")))
+  dev.off()
+}
+```
+
+```{r}
+rm(list = ls())
+
+library(pheatmap)
+library(gridExtra)
+library(grid)
+
+data_dir <- "/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/SpaceX_BSNMani/data"
+out_dir  <- "/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/hdWGCNA_vs_Smoothie_comparison"
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+hdwgcna  <- readRDS(file.path(data_dir, "hdWGCNA_co_expression_list_uni.RDS"))
+smoothie <- readRDS(file.path(data_dir, "Smoothie_co_expression_list_uni.RDS"))
+
+common_donors <- intersect(names(hdwgcna), names(smoothie))
+
+safe_fisherz <- function(mat) {
+  mat <- as.matrix(mat)
+  mat[mat >= 1]  <- 0.999999
+  mat[mat <= -1] <- -0.999999
+  z <- atanh(mat)
+  dimnames(z) <- dimnames(mat)
+  z[!is.finite(z)] <- NA
+  diag(z) <- 0
+  z
+}
+
+align_pair <- function(mat1, mat2) {
+  mat1 <- as.matrix(mat1)
+  mat2 <- as.matrix(mat2)
+
+  if (!is.null(rownames(mat1)) && !is.null(rownames(mat2))) {
+    common_genes <- Reduce(intersect, list(
+      rownames(mat1), colnames(mat1),
+      rownames(mat2), colnames(mat2)
+    ))
+
+    mat1 <- mat1[common_genes, common_genes, drop = FALSE]
+    mat2 <- mat2[common_genes, common_genes, drop = FALSE]
+  } else {
+    stopifnot(all(dim(mat1) == dim(mat2)))
+  }
+
+  list(hdwgcna = mat1, smoothie = mat2)
+}
+
+get_pair_z <- function(donor) {
+  pair <- align_pair(hdwgcna[[donor]], smoothie[[donor]])
+  list(
+    hdwgcna = safe_fisherz(pair$hdwgcna),
+    smoothie = safe_fisherz(pair$smoothie)
+  )
+}
+
+upper_vals <- function(mat) {
+  mat[upper.tri(mat, diag = FALSE)]
+}
+
+compare_one_donor <- function(donor) {
+  pair <- get_pair_z(donor)
+
+  x <- upper_vals(pair$hdwgcna)
+  y <- upper_vals(pair$smoothie)
+  keep <- is.finite(x) & is.finite(y)
+
+  x <- x[keep]
+  y <- y[keep]
+
+  data.frame(
+    donor = donor,
+    n_edges = length(x),
+    edge_pearson = cor(x, y, method = "pearson"),
+    edge_spearman = cor(x, y, method = "spearman"),
+    mean_abs_diff = mean(abs(x - y)),
+    median_abs_diff = median(abs(x - y)),
+    frobenius_diff = sqrt(sum((x - y)^2)),
+    sign_discordance = mean(sign(x) != sign(y))
+  )
+}
+
+comparison_summary <- do.call(rbind, lapply(common_donors, compare_one_donor))
+write.csv(
+  comparison_summary,
+  file.path(out_dir, "hdWGCNA_vs_Smoothie_edgewise_summary_v2.csv"),
+  row.names = FALSE
+)
+
+# Option 1: manually choose donors that visually show clear hdWGCNA-Smoothie differences
+selected_donors <- c("H20.33.044", "H21.33.014", "H21.33.021", "H21.33.040")
+selected_donors <- selected_donors[selected_donors %in% common_donors]
+
+## Option 2: if manual donors are unavailable, automatically choose most different donors
+# selected_donors <- c()
+# if (length(selected_donors) == 0) {
+#   comparison_summary <- comparison_summary[order(comparison_summary$edge_pearson), ]
+#   selected_donors <- head(comparison_summary$donor, 4)
+# }
+
+## Shared color scale across selected donors
+all_vals <- c()
+for (donor in selected_donors) {
+  pair <- get_pair_z(donor)
+  all_vals <- c(all_vals, as.vector(pair$hdwgcna), as.vector(pair$smoothie))
+}
+all_vals <- all_vals[is.finite(all_vals)]
+
+val_range <- max(abs(quantile(all_vals, probs = c(0.01, 0.99), na.rm = TRUE)))
+val_range <- ceiling(val_range * 10) / 10
+
+colors <- colorRampPalette(c("blue", "white", "red"))(100)
+breaks <- seq(-val_range, val_range, length.out = 101)
+
+heatmap_grobs <- list()
+
+for (donor in selected_donors) {
+  pair <- get_pair_z(donor)
+
+  p_hdw <- pheatmap(
+    pair$hdwgcna,
+    color = colors,
+    breaks = breaks,
+    main = paste0(donor, " hdWGCNA"),
+    cluster_rows = TRUE,
+    cluster_cols = TRUE,
+    show_rownames = FALSE,
+    show_colnames = FALSE,
+    treeheight_row = 0,
+    treeheight_col = 0,
+    border_color = NA,
+    na_col = "grey90",
+    silent = TRUE
+  )
+
+  row_order <- p_hdw$tree_row$order
+  col_order <- p_hdw$tree_col$order
+
+  p_sm <- pheatmap(
+    pair$smoothie[row_order, col_order],
+    color = colors,
+    breaks = breaks,
+    main = paste0(donor, " Smoothie"),
+    cluster_rows = FALSE,
+    cluster_cols = FALSE,
+    show_rownames = FALSE,
+    show_colnames = FALSE,
+    border_color = NA,
+    na_col = "grey90",
+    silent = TRUE
+  )
+
+  heatmap_grobs <- c(heatmap_grobs, list(p_hdw$gtable, p_sm$gtable))
+}
+
+png(
+  file.path(out_dir, "Supplementary_hdWGCNA_vs_Smoothie_multi_donor_heatmaps_v2.png"),
+  width = 4800,
+  height = 2200 * length(selected_donors),
+  res = 600
+)
+
+grid.arrange(
+  grobs = heatmap_grobs,
+  ncol = 2,
+  top = textGrob(
+    "Additional donor-level representative comparisons of hdWGCNA and Smoothie",
+    gp = gpar(fontsize = 16, fontface = "bold")
+  )
+)
+
+dev.off()
+```
+
+```{r}
+rm(list = ls())
+
+library(DescTools)
+library(pheatmap)
+library(gridExtra)
+library(grid)
+
+data_dir <- "/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/SpaceX_BSNMani/data"
+out_dir  <- "/home/koe/BSNMani_application-main/Tong_results/BSNMani_for_transfer/BSNMani_for_transfer/BSNMani/4method_heatmap_updated"
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+baseline <- readRDS(file.path(data_dir, "Baseline_co_expression_list_uni.RDS"))
+hdwgcna  <- readRDS(file.path(data_dir, "hdWGCNA_co_expression_list_uni.RDS"))
+spacex   <- readRDS(file.path(data_dir, "SpaceX_co_expression_list_uni.RDS"))
+smoothie <- readRDS(file.path(data_dir, "Smoothie_co_expression_list_uni.RDS"))
+
+# baseline_filter = baseline
+# hdwgcna_filter = hdwgcna
+# spacex_filter = spacex
+# smoothie_filter = smoothie
+# 
+# safe_fisherz <- function(mat) {
+#   FisherZ(mat)
+# }
+# baseline_z  <- lapply(baseline_filter, safe_fisherz)
+# hdwgcna_z   <- lapply(hdwgcna_filter, safe_fisherz)
+# spacex_z    <- lapply(spacex_filter, safe_fisherz)
+# smoothie_z  <- lapply(smoothie_filter, safe_fisherz)
+# 
+# set_diag_zero <- function(lst) {
+#   lapply(lst, function(mat) {
+#     diag(mat) <- 0
+#     return(mat)
+#   })
+# }
+# 
+# baseline_z  <- set_diag_zero(baseline_z)
+# hdwgcna_z   <- set_diag_zero(hdwgcna_z)
+# spacex_z    <- set_diag_zero(spacex_z)
+# smoothie_z  <- set_diag_zero(smoothie_z)
+# 
+# keep_vars <- c("baseline_z", "hdwgcna_z", "spacex_z", "smoothie_z")
+# rm(list = setdiff(ls(), keep_vars))
+
+
+safe_fisherz <- function(mat) {
+  mat <- as.matrix(mat)
+  mat[mat >= 1]  <- 0.999999
+  mat[mat <= -1] <- -0.999999
+  z <- atanh(mat)
+  z[!is.finite(z)] <- NA
+  diag(z) <- 0
+  dimnames(z) <- dimnames(mat)
+  z
+}
+
+align_four_methods <- function(donor) {
+  if (!(donor %in% names(baseline)) ||
+      !(donor %in% names(hdwgcna)) ||
+      !(donor %in% names(spacex)) ||
+      !(donor %in% names(smoothie))) {
+    stop(paste0("Donor not found in all four method lists: ", donor))
+  }
+
+  mats <- list(
+    WGCNA = as.matrix(baseline[[donor]]),
+    hdWGCNA = as.matrix(hdwgcna[[donor]]),
+    SpaceX = as.matrix(spacex[[donor]]),
+    Smoothie = as.matrix(smoothie[[donor]])
+  )
+
+  has_valid_names <- all(sapply(mats, function(x) {
+    !is.null(rownames(x)) &&
+      !is.null(colnames(x)) &&
+      length(rownames(x)) > 0 &&
+      length(colnames(x)) > 0
+  }))
+
+  if (has_valid_names) {
+    common_genes <- Reduce(intersect, c(lapply(mats, rownames), lapply(mats, colnames)))
+
+    if (length(common_genes) > 1) {
+      mats <- lapply(mats, function(x) x[common_genes, common_genes, drop = FALSE])
+    } else {
+      message("No shared row/column names found. Using original matrix order.")
+    }
+  } else {
+    message("Matrices do not have valid row/column names. Using original matrix order.")
+  }
+
+  dims <- lapply(mats, dim)
+  if (length(unique(sapply(dims, paste, collapse = "x"))) != 1) {
+    stop("Four method matrices do not have the same dimensions for donor: ", donor)
+  }
+
+  mats <- lapply(mats, safe_fisherz)
+  mats
+}
+
+plot_four_method_heatmap <- function(donor, file_prefix = "Figure2a_updated") {
+  mats <- align_four_methods(donor)
+
+  all_vals <- unlist(lapply(mats, as.vector))
+  all_vals <- all_vals[is.finite(all_vals)]
+
+  if (length(all_vals) == 0) {
+    stop("No finite values found after Fisher Z transformation for donor: ", donor)
+  }
+
+  val_range <- max(abs(quantile(all_vals, probs = c(0.01, 0.99), na.rm = TRUE)))
+
+  if (!is.finite(val_range) || val_range == 0) {
+    val_range <- max(abs(all_vals), na.rm = TRUE)
+  }
+
+  if (!is.finite(val_range) || val_range == 0) {
+    val_range <- 1
+  }
+
+  val_range <- ceiling(val_range * 10) / 10
+
+  colors <- colorRampPalette(c("blue", "white", "red"))(100)
+  breaks <- seq(-val_range, val_range, length.out = 101)
+
+  p_hdw <- pheatmap(
+    mats$hdWGCNA,
+    color = colors,
+    breaks = breaks,
+    main = paste0(donor, " hdWGCNA"),
+    cluster_rows = TRUE,
+    cluster_cols = TRUE,
+    show_rownames = FALSE,
+    show_colnames = FALSE,
+    treeheight_row = 0,
+    treeheight_col = 0,
+    border_color = NA,
+    na_col = "grey90",
+    silent = TRUE
+  )
+
+  row_order <- p_hdw$tree_row$order
+  col_order <- p_hdw$tree_col$order
+
+  plot_one <- function(mat, title) {
+    pheatmap(
+      mat[row_order, col_order],
+      color = colors,
+      breaks = breaks,
+      main = title,
+      cluster_rows = FALSE,
+      cluster_cols = FALSE,
+      show_rownames = FALSE,
+      show_colnames = FALSE,
+      border_color = NA,
+      na_col = "grey90",
+      silent = TRUE
+    )
+  }
+
+  p_wgcna <- plot_one(mats$WGCNA, paste0(donor, " WGCNA"))
+  p_space <- plot_one(mats$SpaceX, paste0(donor, " SpaceX"))
+  p_smoo  <- plot_one(mats$Smoothie, paste0(donor, " Smoothie"))
+
+  png(
+    file.path(out_dir, paste0(file_prefix, "_", donor, "_4methods.png")),
+    width = 5200,
+    height = 1800,
+    res = 600
+  )
+
+  grid.arrange(
+    p_wgcna$gtable,
+    p_hdw$gtable,
+    p_space$gtable,
+    p_smoo$gtable,
+    ncol = 4,
+    top = textGrob(
+      paste0("Representative donor-level co-expression heatmaps: ", donor),
+      gp = gpar(fontsize = 14, fontface = "bold")
+    )
+  )
+
+  dev.off()
+}
+```
+
+
+```{r}
+## Recommended main Figure 2a candidate
+plot_four_method_heatmap("H20.33.001", file_prefix = "main_candidate")
+
+## Alternative strong candidate
+plot_four_method_heatmap("H21.33.001", file_prefix = "main_candidate")
+
+## Optional supplementary donors
+supp_donors <- c("H20.33.044", "H21.33.031", "H21.33.040")
+
+for (donor in supp_donors) {
+  plot_four_method_heatmap(donor, file_prefix = "supplementary_candidate")
+}
+```
+
+```{r}
+plot_four_method_heatmap("H20.33.001", file_prefix = "main_candidate")
+plot_four_method_heatmap("H21.33.001", file_prefix = "main_candidate")
+plot_four_method_heatmap("H20.33.044", file_prefix = "supplementary_candidate")
+plot_four_method_heatmap("H21.33.031", file_prefix = "supplementary_candidate")
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
