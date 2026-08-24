@@ -73,10 +73,6 @@ SPIN/
 │       ├── SEA_AD/
 │       ├── IMC_BC/
 │       └── celltype_SEAAD/
-├── results/
-│   ├── SEA_AD/
-│   ├── IMC_BC/
-│   └── celltype_SEAAD/
 └── figures/
     ├── Figure1/
     ├── Figure2/
