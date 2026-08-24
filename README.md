@@ -66,15 +66,6 @@ SPIN/
 │   │   │   └── celltype_oligodendrocyte/
 │   │   └── IMC_BC/
 │   ├── bsnmani_modeling/
-│   │   ├── common/
-│   │   ├── SEA_AD/
-│   │   └── IMC_BC/
-│   ├── cross_validation/
-│   │   ├── SEA_AD/
-│   │   │   ├── main_analysis/
-│   │   │   └── all_section_sensitivity/
-│   │   └── IMC_BC/
-│   ├── benchmarking/
 │   │   ├── SEA_AD/
 │   │   └── IMC_BC/
 │   └── visualization/
@@ -86,17 +77,13 @@ SPIN/
 │   ├── SEA_AD/
 │   ├── IMC_BC/
 │   └── celltype_SEAAD/
-├── figures/
-│   ├── Figure1/
-│   ├── Figure2/
-│   ├── Figure3/
-│   ├── Figure4/
-│   └── Figure5/
-├── supplementary/
-│   ├── figures/
-│   ├── tables/
-│   └── notes/
-└── environment/
+└── figures/
+    ├── Figure1/
+    ├── Figure2/
+    ├── Figure3/
+    ├── Figure4/
+    └── Figure5/
+
 ```
 
 The `results/`, `figures/`, `supplementary/`, and `environment/` directories are organized as destinations for analysis outputs, manuscript materials, and reproducibility files. Large raw datasets and generated intermediate objects are not stored in this Git repository.
