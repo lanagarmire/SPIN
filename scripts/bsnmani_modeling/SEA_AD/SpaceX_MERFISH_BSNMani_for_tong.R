@@ -39,27 +39,22 @@ q_val <- as.numeric(args[1])
 chain_idx <- as.numeric(args[2])
 cat("Running for q_val =", q_val, "chain_idx =", chain_idx, "\n")
 #######################################################################
-
-## check point 1/2                          ####
-#q_val = 5   ## Change the number from 3 to 8 by Tong
-##
-
-
 fix_ls = c("")
 SGI_g1 = "GQN"
 SGI_g2 = "KPN"
 dat_setting = "all"
-r_val = 2   ## change by TONG, since we have Arteriolosclerosis, RIN, PMI
+r_val = 2   ## change by TONG, since we have Arteriolosclerosis
 
 ## check point                   ####
-cell_type = "Oli"
+cell_type = "Oli_uni"
 #########################################
-### load data
+### load data - "smoothie_uni", "Baseline_uni","SpaceX_uni", "hdWGCNA_uni","Oli_uni"
 #########################################
+## check point                   ####
+clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SEA-AD Updated Data/meta_uni.xlsx")
+wgcna_transformed_ls <- readRDS("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/hdWGCNA_co_express_list_uni_Oli.RDS")
 
-## check point                     ####
-clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/data/meta.xlsx")
-wgcna_transformed_ls = readRDS("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/data/Smoothie_co_expression_list_Oli.RDS")
+
 ##
 
 n_pol = length(wgcna_transformed_ls)
@@ -139,9 +134,9 @@ two_stage_single_chain_train(n_roi = n_roi, q_val = q_val, q_val_0 = q_val, n_po
                              rho0=2, psi20=1, gamma0=2, kappa20=1, omega0=2, phi20=1,## g2
                              k2 = 10, SGI_g2 = "KPN", g2_weighted = TRUE, ## MH
                              seed = 12345+chain_idx, burn_in = n_burnin, mcmc_sample = n_samps, chain_idx = chain_idx, 
-                             save_path_g1 = fs::path("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/result",cell_type,paste("q",q_val,sep="_")),
-                             save_path_g2 = fs::path("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/result",cell_type,paste("q",q_val,sep="_")),
-                             save_path_MH = fs::path("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/result",cell_type,paste("q",q_val,sep="_")),
+                             save_path_g1 = fs::path("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/BSNMani_output_result",cell_type,paste("q",q_val,sep="_")),
+                             save_path_g2 = fs::path("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/BSNMani_output_result",cell_type,paste("q",q_val,sep="_")),
+                             save_path_MH = fs::path("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/BSNMani_output_result",cell_type,paste("q",q_val,sep="_")),
                              fname_suffix_g1 = paste("q",q_val,sep="_"), 
                              fname_suffix_g2 = paste("q",q_val,sep="_"),  
                              fname_suffix_MH = paste("q",q_val,sep="_"),  
