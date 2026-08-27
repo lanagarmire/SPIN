@@ -43,7 +43,7 @@ cat("Running with q_val =", q_val, "\n")
 #######################################################################
 
 ## check point 1/5                                      ####
-cell_type = "Oli"
+cell_type = "Oli_uni"  ## "Baseline_uni", "smoothie_uni", "SpaceX_uni", "hdWGCNA_uni","Oli_uni"
 ##
 
 cat("q_val is:",q_val)
@@ -54,10 +54,38 @@ n_chains=2
 #########################################
 ### posterior summary and diagnostics
 #########################################
-## check point 2/5                                      ####
-clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/data/meta.xlsx")
-wgcna_transformed_ls = readRDS("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/data/Smoothie_co_expression_list_Oli.RDS")
-##
+## load data
+clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SEA-AD Updated Data/meta_uni.xlsx")
+
+if (cell_type == "Baseline_uni") {
+  wgcna_transformed_ls <- readRDS(
+    "/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/Baseline_co_expression_list_uni.RDS"
+  )
+  
+} else if (cell_type == "smoothie_uni") {
+  wgcna_transformed_ls <- readRDS(
+    "/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/Smoothie_co_expression_list_uni.RDS"
+  )
+  
+} else if (cell_type == "SpaceX_uni") {
+  wgcna_transformed_ls <- readRDS(
+    "/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/SpaceX_co_expression_list_uni.RDS"
+  )
+  
+} else if (cell_type == "hdWGCNA_uni") {
+  wgcna_transformed_ls <- readRDS(
+    "/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/hdWGCNA_co_expression_list_uni.RDS"
+  )
+  
+} else if (cell_type == "Oli_uni") {
+  wgcna_transformed_ls <- readRDS(
+    "/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/data/hdWGCNA_co_express_list_uni_Oli.RDS"
+  )
+  
+} else {
+  stop("Unknown cell_type: ", cell_type)
+}
+
 
 n_pol = length(wgcna_transformed_ls)
 n_roi = nrow(wgcna_transformed_ls[[1]])
@@ -74,7 +102,7 @@ for(i in 1:n_pol){
 cov_df = as.matrix(clinical_df %>% select(Atherosclerosis))
 
 ######## load real data results (whole)
-save_path = fs::path("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/result",cell_type,paste("q",q_val,sep="_"))
+save_path = fs::path("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/BSNMani_output_result",cell_type,paste("q",q_val,sep="_"))
 
 hybrid_res = list()
 fname_suffix_MH = paste("q",q_val,sep="_")
@@ -95,7 +123,7 @@ heidel_ls = lapply(MALA_samps_ls,FUN=function(x){heidel.diag(mcmc.list(x))})
 ########## convergence: Rhat, Geweke, neff
 print("obtaining convergence diagnostics")
 MALA_subset_ls = subset_samps(samps_ls = MALA_samps_ls[c("Lambda_flat","s2","t2_lambda","X","U","Y_C_llk","Y_llk","C_llk","d","t2_alpha","t2_beta","t2")], n_samps = dat_ls$n_samps, n_burnin = dat_ls$n_burnin)
-saveRDS(MALA_subset_ls,file="/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/MALA_subset_ls_debug.RDS")
+saveRDS(MALA_subset_ls,file="/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/MALA_subset_ls_debug.RDS")
 rm(MALA_samps_ls)
 
 MALA_Rhat = Rhat(samps_subset = MALA_subset_ls[c("Lambda_flat","s2","t2_lambda","X","U","Y_C_llk","Y_llk","C_llk","d","t2_alpha","t2_beta","t2")])
@@ -112,7 +140,7 @@ print("training R2")
 ## change merFISH_clinical.RDS (the clinical file that we open) to clinical_df_final
 
 ## check point 3/5                            ####
-clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/data/meta.xlsx")
+clinical_df = read_excel("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SEA-AD Updated Data/meta_uni.xlsx")
 ##
 
 n_pol = nrow(clinical_df)
@@ -168,12 +196,12 @@ for(i in 1:q_val){
 rm(list = ls())
 print("#######grouping genes###################")
 
-## check point 4/5                            #### genes' name vector may need to be changed when changing the cell type
+## check point 4/5                            #### genes' name vector may need to be changed when changing the cell type?
 args <- commandArgs(trailingOnly = TRUE)
 q_val <- as.numeric(args[1])
-cell_type = "Oli"
+cell_type = "Oli_uni"
 ##
-source("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/building/MerFISH_methods_of_grouping_genes_TL/MerFISH_methods_of_grouping_genes_TL.R")
+source("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/building/MerFISH_methods_of_grouping_genes_TL/MerFISH_methods_of_grouping_genes_TL.R")
 
 
 rm(list = ls())
@@ -182,12 +210,17 @@ print("#######clinical model construction & LOOCV###################")
 ## check point 5/5                           ####
 args <- commandArgs(trailingOnly = TRUE)
 q_val <- as.numeric(args[1]) 
-cell_type = "Oli"
+cell_type = "Oli_uni"
+
+threshold_method = "roc"  # options:  "fixed_0.5"  "prevalence"  "roc"
+fixed_threshold = 0.5
+prevalence_threshold = 0.37
+
 print("no lambda filtered\n")
 ##
                                                ####
 ## need to change code inside this R script when changing the cell type   ####
-source("/nfs/turbo/umms-lgarmire/liyijun/BSNMani_ST_Application_Project/codes/SpaceX_BSNMani/building/clincal_model_construction/clinical_model_construction.R")
+source("/nfs/turbo/umms-lgarmire/liutong/BSNMani/SpaceX_BSNMani/building/clincal_model_construction/clinical_model_construction.R")
 
 
 
