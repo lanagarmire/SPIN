@@ -1,7 +1,3 @@
----
-title: "IMC Breast Cancer Data Preprocessing"
-output: html_document
----
 
 # Overview
 
