@@ -598,15 +598,3 @@ saveRDS(
   file = file.path(base_dir, "clinical_df_3cov.RDS")
 )
 ```
-
-# 12. Reproducibility Notes
-
-- Keep raw data outside the Git repository when files are large or access-restricted.
-- Configure local paths through `BSNMANI_BC_DIR` and `BSNMANI_TIDYBC_DIR` instead of committing personal absolute paths.
-- Match expression and spatial files by core name rather than directory position.
-- Record the package versions used for the final analysis (for example, with `sessionInfo()` or `renv`).
-- Before public release, verify that the repository does not contain patient-identifiable or restricted clinical information.
-
-```{r session-info}
-sessionInfo()
-```
