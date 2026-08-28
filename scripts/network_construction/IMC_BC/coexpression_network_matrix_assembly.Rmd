@@ -1,0 +1,304 @@
+---
+title: "Co-expression Network Matrix Assembly"
+output: html_document
+---
+
+# Overview
+
+This notebook contains the co-expression-network-related portion separated from the original preprocessing workflow.
+
+> **Important:** In the original `data_preprocessing (1).Rmd` file, the per-core correlation matrices are **already precomputed** as `corr_<core>.csv`. The original code does not show how those correlation matrices were calculated. Therefore, this notebook faithfully reproduces the available workflow: it loads the precomputed per-core correlation matrices, validates them, preserves the desired core order, and saves them as a single RDS object for downstream analysis.
+
+# 1. Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(tools)
+
+# -----------------------------------------------------------------------------
+# User configuration
+# -----------------------------------------------------------------------------
+# Recommended: define BSNMANI_BC_DIR on your local system.
+# Example:
+#   Sys.setenv(BSNMANI_BC_DIR = "path/to/BSNMANi/BC")
+base_dir <- Sys.getenv(
+  "BSNMANI_BC_DIR",
+  unset = "path/to/BSNMANi/BC"
+)
+
+# Metadata containing the cores to retain and their desired order.
+core_metadata_file <- file.path(base_dir, "Basel_CleanCore_Age.csv")
+
+# Folder containing precomputed per-core correlation matrices.
+correlation_dir <- file.path(base_dir, "correlation_matrix")
+
+# Output file.
+output_rds <- file.path(base_dir, "WGCNA_transformed_BC.RDS")
+```
+
+# 2. Load the Core List
+
+```{r load-core-list}
+if (!file.exists(core_metadata_file)) {
+  stop("Core metadata file not found: ", core_metadata_file)
+}
+
+core_metadata <- read_csv(
+  core_metadata_file,
+  show_col_types = FALSE
+)
+
+if (!"core" %in% colnames(core_metadata)) {
+  stop("The metadata file must contain a column named 'core'.")
+}
+
+core_list <- unique(core_metadata$core)
+
+cat("Number of cores requested:", length(core_list), "\n")
+head(core_list)
+```
+
+# 3. Load Precomputed Correlation Matrices
+
+Each matrix is expected to be stored as:
+
+```text
+correlation_matrix/
+├── corr_<core_1>.csv
+├── corr_<core_2>.csv
+├── corr_<core_3>.csv
+└── ...
+```
+
+```{r load-correlation-matrices}
+correlation_list <- list()
+missing_cores <- character()
+
+for (core_name in core_list) {
+
+  file_name <- paste0("corr_", core_name, ".csv")
+  file_path <- file.path(correlation_dir, file_name)
+
+  if (!file.exists(file_path)) {
+    warning("Correlation matrix not found: ", file_name)
+    missing_cores <- c(missing_cores, core_name)
+    next
+  }
+
+  correlation_matrix <- as.matrix(
+    read.csv(
+      file_path,
+      row.names = 1,
+      check.names = FALSE
+    )
+  )
+
+  # Ensure that matrix values are numeric.
+  storage.mode(correlation_matrix) <- "numeric"
+
+  correlation_list[[core_name]] <- correlation_matrix
+}
+
+cat(
+  "Successfully loaded:",
+  length(correlation_list),
+  "of",
+  length(core_list),
+  "correlation matrices.\n"
+)
+
+if (length(missing_cores) > 0) {
+  cat("Number of missing cores:", length(missing_cores), "\n")
+  print(missing_cores)
+}
+```
+
+# 4. Quality Control
+
+The downstream network representation should contain one square marker-by-marker matrix for each core.
+
+```{r correlation-matrix-qc}
+validate_correlation_matrix <- function(mat, core_name, tolerance = 1e-8) {
+
+  issues <- character()
+
+  if (!is.matrix(mat)) {
+    issues <- c(issues, "not a matrix")
+    return(issues)
+  }
+
+  if (nrow(mat) != ncol(mat)) {
+    issues <- c(issues, "matrix is not square")
+  }
+
+  if (anyNA(mat)) {
+    issues <- c(issues, "contains missing values")
+  }
+
+  if (nrow(mat) == ncol(mat)) {
+    if (!isTRUE(all.equal(
+      mat,
+      t(mat),
+      tolerance = tolerance,
+      check.attributes = FALSE
+    ))) {
+      issues <- c(issues, "matrix is not symmetric")
+    }
+  }
+
+  if (!is.null(rownames(mat)) &&
+      !is.null(colnames(mat)) &&
+      !identical(rownames(mat), colnames(mat))) {
+    issues <- c(
+      issues,
+      "row and column marker names are not identically ordered"
+    )
+  }
+
+  if (length(issues) == 0) {
+    return("OK")
+  }
+
+  paste(issues, collapse = "; ")
+}
+
+qc_results <- data.frame(
+  core = names(correlation_list),
+  n_features = vapply(
+    correlation_list,
+    nrow,
+    integer(1)
+  ),
+  status = vapply(
+    names(correlation_list),
+    function(core_name) {
+      validate_correlation_matrix(
+        correlation_list[[core_name]],
+        core_name
+      )
+    },
+    character(1)
+  ),
+  stringsAsFactors = FALSE
+)
+
+print(qc_results)
+
+problematic_matrices <- qc_results %>%
+  filter(status != "OK")
+
+if (nrow(problematic_matrices) > 0) {
+  warning(
+    nrow(problematic_matrices),
+    " correlation matrices did not pass all QC checks."
+  )
+  print(problematic_matrices)
+}
+```
+
+# 5. Check Marker Consistency Across Cores
+
+All cores should ideally use the same markers in the same order before the matrices are passed to downstream modeling.
+
+```{r marker-consistency}
+if (length(correlation_list) > 0) {
+
+  reference_core <- names(correlation_list)[1]
+  reference_markers <- rownames(correlation_list[[reference_core]])
+
+  inconsistent_cores <- names(correlation_list)[
+    !vapply(
+      correlation_list,
+      function(mat) {
+        identical(rownames(mat), reference_markers) &&
+          identical(colnames(mat), reference_markers)
+      },
+      logical(1)
+    )
+  ]
+
+  if (length(inconsistent_cores) == 0) {
+    cat("All correlation matrices use the same marker order.\n")
+  } else {
+    warning(
+      "Marker names/order differ for ",
+      length(inconsistent_cores),
+      " core(s)."
+    )
+    print(inconsistent_cores)
+  }
+}
+```
+
+# 6. Assemble the Network-Matrix List
+
+The original preprocessing notebook named this object `WGCNA_transformed_BC`.
+
+```{r assemble-network-list}
+# Keep the matrices in the same order as core_list.
+available_cores <- core_list[core_list %in% names(correlation_list)]
+
+WGCNA_transformed_BC <- correlation_list[available_cores]
+
+cat(
+  "Final number of co-expression matrices:",
+  length(WGCNA_transformed_BC),
+  "\n"
+)
+
+head(names(WGCNA_transformed_BC))
+```
+
+# 7. Save the RDS Object
+
+```{r save-network-rds}
+saveRDS(
+  WGCNA_transformed_BC,
+  file = output_rds
+)
+
+cat("Saved network matrices to:\n", output_rds, "\n")
+```
+
+# 8. Inspect the Final Object
+
+```{r inspect-network-object}
+network_obj <- readRDS(output_rds)
+
+cat("Object class:", class(network_obj), "\n")
+cat("Number of cores:", length(network_obj), "\n")
+
+if (length(network_obj) > 0) {
+
+  first_core <- names(network_obj)[1]
+
+  cat("Example core:", first_core, "\n")
+  cat(
+    "Matrix dimensions:",
+    paste(dim(network_obj[[first_core]]), collapse = " x "),
+    "\n"
+  )
+
+  print(
+    network_obj[[first_core]][
+      1:min(5, nrow(network_obj[[first_core]])),
+      1:min(5, ncol(network_obj[[first_core]])),
+      drop = FALSE
+    ]
+  )
+}
+```
+
+# Reproducibility Notes
+
+- This notebook does **not** recreate the correlation matrices because their construction procedure is not present in the supplied preprocessing file.
+- The expected input matrices are the precomputed `corr_<core>.csv` files.
+- Keep the marker names and marker order consistent across all cores.
+- Keep the core order aligned with the clinical metadata used downstream.
+- Before publishing the repository, document the separate method/script that generated the correlation matrices.
+- Record package versions used for the final analysis.
+
+```{r session-info}
+sessionInfo()
+```
