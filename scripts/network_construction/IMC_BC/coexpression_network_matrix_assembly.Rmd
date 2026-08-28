@@ -7,8 +7,6 @@ output: html_document
 
 This notebook contains the co-expression-network-related portion separated from the original preprocessing workflow.
 
-> **Important:** In the original `data_preprocessing (1).Rmd` file, the per-core correlation matrices are **already precomputed** as `corr_<core>.csv`. The original code does not show how those correlation matrices were calculated. Therefore, this notebook faithfully reproduces the available workflow: it loads the precomputed per-core correlation matrices, validates them, preserves the desired core order, and saves them as a single RDS object for downstream analysis.
-
 # 1. Setup
 
 ```{r setup, message=FALSE, warning=FALSE}
@@ -288,17 +286,4 @@ if (length(network_obj) > 0) {
     ]
   )
 }
-```
-
-# Reproducibility Notes
-
-- This notebook does **not** recreate the correlation matrices because their construction procedure is not present in the supplied preprocessing file.
-- The expected input matrices are the precomputed `corr_<core>.csv` files.
-- Keep the marker names and marker order consistent across all cores.
-- Keep the core order aligned with the clinical metadata used downstream.
-- Before publishing the repository, document the separate method/script that generated the correlation matrices.
-- Record package versions used for the final analysis.
-
-```{r session-info}
-sessionInfo()
 ```
