@@ -71,8 +71,7 @@ SPIN/
 │   └── visualization/
 │       ├── common/
 │       ├── SEA_AD/
-│       ├── IMC_BC/
-│       └── celltype_SEAAD/
+│       └── IMC_BC/
 └── figures/
     ├── Figure1/
     ├── Figure2/
