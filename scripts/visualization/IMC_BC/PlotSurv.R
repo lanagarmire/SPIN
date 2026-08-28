@@ -24,7 +24,7 @@ plotSurv <- function(clinical_df, model, title = "", n_group = 3) {
   # Extract C-Index
   cindex <- model$concordance[["concordance"]]
   cindex <- formatC(cindex, digits = 3)
-  if (title == "BSNMani") cindex <- 0.743
+  
   # Print KM curve
   fit <- survival::survfit(survival::Surv(OSmonth, Patientstatus) ~ group, data = clinical_df)
   survminer::ggsurvplot(
