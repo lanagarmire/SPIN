@@ -16,7 +16,7 @@ opt <- getopt::getopt(spec)
 seed <- opt[["seed"]]
 q_val <- opt[["qval"]]
 output_dir <- opt[["output"]]
-fold <- 5
+fold <- 3
 
 set.seed(seed)
 mkdir(output_dir)
