@@ -1,8 +1,3 @@
----
-title: "Co-expression Network Matrix Assembly"
-output: html_document
----
-
 # Overview
 
 This notebook contains the co-expression-network-related portion separated from the original preprocessing workflow.
