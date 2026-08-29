@@ -3,19 +3,19 @@
 # Plot using all patients
 
 q_vals <- 2:8
-seeds <- c(0, 42, 64, 123, 894)
-output_dir <- "/nfs/dcmb-lgarmire/yangiwen/workspace/bsnmani/output/bc/output_21"
+folds <- c(1, 2, 3, 4, 5)
+output_dir <- ### output path
 
 # Read BSNMani prediction for test sets and calculate c-index
 results <- setNames(lapply(q_vals, function(q_val) {
-  setNames(lapply(seeds, function(seed) {
+  setNames(lapply(folds, function(seed) {
     clinical_df_test <- readRDS(file.path(output_dir, paste0("q", q_val), paste0("s", seed), "test", "g2_survival", "clinical_df_test_test.RDS"))
     lp_test <- readRDS(file.path(output_dir, paste0("q", q_val), paste0("s", seed), "test", "g2_survival", "lp_test_test.RDS"))
     clinical_df_test$pred <- lp_test
     surv_obj_test <- survival::Surv(clinical_df_test$OSmonth, clinical_df_test$Patientstatus)
     cindex_test <- survival::concordance(surv_obj_test ~ pred, data = clinical_df_test, reverse = T)$concordance
     data.frame(q = q_val, seed = seed, cindex = cindex_test)
-  }), seeds)
+  }), folds)
 }), q_vals)
 results <- do.call(rbind, lapply(names(results), function(q) {
   do.call(rbind, results[[q]])
