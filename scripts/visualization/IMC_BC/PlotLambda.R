@@ -3,54 +3,56 @@ source("/nfs/dcmb-lgarmire/yangiwen/workspace/common/Utils.R")
 output_dir <- file.path("/nfs/dcmb-lgarmire/yangiwen/workspace/bsnmani/output/bc/selected_model")
 q <- 2
 clinical_df <- read.csv(file.path(output_dir, "clinical_df_coxph.csv"))
-clinical_df$clusters <- clinical_df$group
-categorical_cols <- c("grade", "clinical_type", "Patientstatus", "clusters")
-for (col in categorical_cols) {
-  clinical_df[[col]] <- factor(clinical_df[[col]], levels = sort(unique(clinical_df[[col]])))
-}
-# clinical_types <- unique(clinical_df$clinical_type)
-
-# for (clinical_type in clinical_types) {
-#   df <- clinical_df[clinical_df$clinical_type == clinical_type,]
-df <- clinical_df
-ann <- df[, c("clusters", "OSmonth", "Patientstatus"), drop = F]
-ann$Patientstatus <- ifelse(ann$Patientstatus == "0", "Alive", "Dead")
-levels(ann$Patientstatus) <- c("Alive", "Dead")
-
-mtx <- as.matrix(sapply(df[, c("age", "grade", paste0("lambda_", 1:q))], as.numeric))
-rownames(mtx) <- rownames(df)
-mtx <- apply(mtx, 2, minmax)
-
-# Order rows by cluster and subcluster (hierarchical clustering within each cluster)
-order_idx <- unlist(lapply(levels(ann$Patientstatus), function(status) {
-  idx <- which(ann$Patientstatus == status)
-  sub_hclust <- hclust(dist(mtx[idx,]))
-  idx[sub_hclust$order]
-}))
-order_idx <- rev(order(ann$OSmonth))
-
-ann <- ann[order_idx, , drop = FALSE]
-mtx <- mtx[order_idx, , drop = FALSE]
-
-# n_clusters <- length(levels(ann$clusters))
-ann_colors <- list(
-  Patientstatus = c("Alive" = "lightblue", "Dead" = "lightcoral")
-  # clinical_type = setNames(RColorBrewer::brewer.pal(length(levels(ann$clinical_type)), "Set2"), levels(ann$clinical_type)),
-  # grade = setNames(RColorBrewer::brewer.pal(length(levels(ann$grade)), "Set3"), levels(ann$grade)),
-  # clusters = setNames(RColorBrewer::brewer.pal(n_clusters, "Set1")[1:n_clusters], levels(ann$clusters))
+# 1. Prepare Annotations (Columns/Top)
+ann <- data.frame(
+  "Patient status" = factor(
+    ifelse(clinical_df$Patientstatus %in% c("1", 1, "Dead"), "Dead", "Alive"),
+    levels = c("Alive", "Dead")),
+  "OS month" = as.numeric(clinical_df$OSmonth),
+  check.names = FALSE
 )
+rownames(ann) <- rownames(clinical_df)
 
-# png(file.path(output_dir, "fig", paste0("lambda_cluster_", clinical_type, ".png")), width = 1024, height = 1024, res = 120)
-png(file.path(output_dir, "fig", "lambda_cluster.png"), width = 1024, height = 1024, res = 120)
-print(pheatmap::pheatmap(
+# 2. Prepare Matrix and Transpose
+mtx <- as.matrix(sapply(clinical_df[, c("age", "grade", paste0("lambda_", 1:q))], as.numeric))
+rownames(mtx) <- rownames(clinical_df)
+mtx <- apply(mtx, 2, minmax)
+mtx <- t(mtx)   # features as rows, patients as columns
+
+# 3. SORT PATIENTS BY OUTCOME (replaces the dendrogram / cluster_cols = TRUE)
+order_idx <- switch(sort_mode,
+  # os        = order(ann[["OS month"]]),                                  # short -> long
+  os = order(ann[["OS month"]], decreasing = TRUE),   # long -> short
+  status_os = order(match(ann[["Patient status"]], c("Dead", "Alive")),  # Dead | Alive
+                    ann[["OS month"]])
+)
+mtx <- mtx[, order_idx, drop = FALSE]
+ann <- ann[order_idx, , drop = FALSE]
+
+gaps <- if (sort_mode == "status_os") {
+  as.integer(table(ann[["Patient status"]])[["Dead"]])
+} else NULL
+
+# 4. Colors (unchanged from your version)
+ann_colors <- list(
+  `Patient status` = c("Alive" = "lightblue", "Dead" = "#F8766D"),
+  `OS month` = c("white", "#2BA25F")
+)
+heatmap_colors <- colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
+
+# 5. Generate Plot — no clustering anywhere; column order IS the survival order
+png(file.path(output_dir, "lambda_by_survival.png"), width = 1600, height = 800, res = 120)
+pheatmap(
   mtx,
-  cluster_cols = F,
-  cluster_rows = T,
-  annotation_row = ann[, c("OSmonth", "Patientstatus")],
+  cluster_cols = FALSE,   # CRITICAL CHANGE: was TRUE -> hclust discarded any order
+  cluster_rows = FALSE,   # features stay in fixed order: age, grade, lambda_1..q
+  annotation_col = ann,
   annotation_colors = ann_colors,
-  show_rownames = F,
+  color = heatmap_colors,
+  gaps_col = gaps,
+  show_colnames = FALSE,
+  show_rownames = TRUE,
   fontsize = 18
-  # main = paste0("Heatmap for ", clinical_type, " q = ", q)
-))
+)
 dev.off()
 # }
